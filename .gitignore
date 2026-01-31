@@ -29,6 +29,8 @@ npm-debug.log*
 !package.json
 !package-lock.json
 !tsconfig.json
+!tsconfig.*.json
+!eslint.config.js
 
 # Test coverage
 coverage/
