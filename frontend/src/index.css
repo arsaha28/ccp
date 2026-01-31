@@ -1,24 +1,31 @@
 @import "tailwindcss";
 
-/* Banking theme custom styles */
+/* Enterprise Banking Theme */
 :root {
   --primary-blue: #0047AB;
   --primary-blue-dark: #003380;
   --primary-blue-light: #4169E1;
   --accent-gold: #D4AF37;
-  --success-green: #28A745;
-  --error-red: #DC3545;
-  --text-dark: #1A1A2E;
-  --text-muted: #6C757D;
-  --bg-light: #F8F9FA;
+  --success-green: #10B981;
+  --warning-amber: #F59E0B;
+  --error-red: #EF4444;
+  --text-dark: #111827;
+  --text-muted: #6B7280;
+  --bg-light: #F9FAFB;
   --bg-white: #FFFFFF;
 }
 
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  background-color: #F3F4F6;
   min-height: 100vh;
   margin: 0;
+  color: var(--text-dark);
 }
 
 /* Voice wave animation */
@@ -28,7 +35,7 @@ body {
     opacity: 0.7;
   }
   50% {
-    transform: scale(1);
+    transform: scale(1.05);
     opacity: 0.3;
   }
   100% {
@@ -39,10 +46,10 @@ body {
 
 @keyframes sound-wave {
   0%, 100% {
-    height: 8px;
+    transform: scaleY(0.5);
   }
   50% {
-    height: 32px;
+    transform: scaleY(1);
   }
 }
 
@@ -54,46 +61,51 @@ body {
   animation: sound-wave 0.5s ease-in-out infinite;
 }
 
-.sound-wave:nth-child(2) {
-  animation-delay: 0.1s;
+.animate-sound-wave {
+  animation: sound-wave 0.6s ease-in-out infinite;
 }
 
-.sound-wave:nth-child(3) {
-  animation-delay: 0.2s;
+.sound-wave:nth-child(2),
+.animate-sound-wave:nth-child(2) {
+  animation-delay: 0.15s;
 }
 
-.sound-wave:nth-child(4) {
+.sound-wave:nth-child(3),
+.animate-sound-wave:nth-child(3) {
   animation-delay: 0.3s;
 }
 
-.sound-wave:nth-child(5) {
-  animation-delay: 0.4s;
+.sound-wave:nth-child(4) {
+  animation-delay: 0.45s;
 }
 
-/* Scrollbar styling */
+.sound-wave:nth-child(5) {
+  animation-delay: 0.6s;
+}
+
+/* Custom scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
+  background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: #D1D5DB;
   border-radius: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: #9CA3AF;
 }
 
 /* Message bubble animations */
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -102,16 +114,18 @@ body {
 }
 
 .message-bubble {
-  animation: fadeInUp 0.3s ease-out;
+  animation: fadeInUp 0.25s ease-out;
 }
 
 /* Typing indicator */
 @keyframes typing-dot {
   0%, 60%, 100% {
     transform: translateY(0);
+    opacity: 0.5;
   }
   30% {
-    transform: translateY(-8px);
+    transform: translateY(-6px);
+    opacity: 1;
   }
 }
 
@@ -130,13 +144,58 @@ body {
 /* Microphone button glow */
 @keyframes mic-glow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(0, 71, 171, 0.4);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
   }
   50% {
-    box-shadow: 0 0 40px rgba(0, 71, 171, 0.8);
+    box-shadow: 0 0 35px rgba(239, 68, 68, 0.7);
   }
 }
 
 .mic-active {
   animation: mic-glow 1s ease-in-out infinite;
+}
+
+/* Status indicator pulse */
+@keyframes status-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.status-pulse {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* Skeleton loading */
+@keyframes skeleton {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: skeleton 1.5s ease-in-out infinite;
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
