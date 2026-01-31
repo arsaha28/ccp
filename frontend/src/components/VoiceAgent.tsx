@@ -29,10 +29,36 @@ export const VoiceAgent: React.FC = () => {
 
   const {
     isSpeaking,
-    speak,
     cancel: cancelSpeech,
     isSupported: speechSynthesisSupported,
+    voices,
   } = useSpeechSynthesis({ rate: 1, pitch: 1 });
+
+  // Select a friendly female voice for customer support
+  const selectedVoice = voices.find(v =>
+    v.name.includes('Google UK English Female') ||
+    v.name.includes('Google US English Female') ||
+    v.name.includes('Samantha') ||  // macOS
+    v.name.includes('Microsoft Zira') ||  // Windows
+    (v.name.toLowerCase().includes('female') && v.lang.startsWith('en'))
+  ) || voices.find(v => v.lang.startsWith('en')) || null;
+
+  // Custom speak function with selected voice
+  const speakWithVoice = useCallback((text: string) => {
+    if (!speechSynthesisSupported || !text) return;
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+    }
+    utterance.rate = 0.95;  // Slightly slower for clarity
+    utterance.pitch = 1.1;  // Slightly higher for friendly tone
+    utterance.volume = 1;
+
+    window.speechSynthesis.speak(utterance);
+  }, [speechSynthesisSupported, selectedVoice]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -53,10 +79,10 @@ export const VoiceAgent: React.FC = () => {
     // Speak the welcome message after a short delay
     setTimeout(() => {
       if (speechSynthesisSupported) {
-        speak(welcomeMessage.text);
+        speakWithVoice(welcomeMessage.text);
       }
     }, 500);
-  }, []);
+  }, [speechSynthesisSupported, speakWithVoice]);
 
   // Process transcript when speech recognition stops
   useEffect(() => {
@@ -104,7 +130,7 @@ export const VoiceAgent: React.FC = () => {
 
       // Speak the response
       if (speechSynthesisSupported && response.fulfillmentText) {
-        speak(response.fulfillmentText);
+        speakWithVoice(response.fulfillmentText);
       }
     } catch (err) {
       console.error('Error processing message:', err);
@@ -123,7 +149,7 @@ export const VoiceAgent: React.FC = () => {
       setIsProcessing(false);
       setShowTyping(false);
     }
-  }, [cancelSpeech, speak, speechSynthesisSupported]);
+  }, [cancelSpeech, speakWithVoice, speechSynthesisSupported]);
 
   const handleVoiceButtonClick = useCallback(() => {
     if (isListening) {
