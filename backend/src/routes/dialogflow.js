@@ -1,80 +1,107 @@
 import express from 'express';
-import dialogflow from '@google-cloud/dialogflow';
+import { SessionsClient } from '@google-cloud/dialogflow-cx';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
 
-// Get project ID from environment
+// Get configuration from environment
 const projectId = process.env.DIALOGFLOW_PROJECT_ID;
+const location = process.env.DIALOGFLOW_LOCATION || 'us-central1';
+const agentId = process.env.DIALOGFLOW_AGENT_ID;
+const languageCode = process.env.DIALOGFLOW_LANGUAGE_CODE || 'en';
 
-// Create session client
-// Note: Authentication is handled via GOOGLE_APPLICATION_CREDENTIALS environment variable
-// which should point to your service account JSON key file
+// Create session client for Dialogflow CX
 let sessionClient;
 try {
-  sessionClient = new dialogflow.SessionsClient();
+  if (projectId && agentId) {
+    sessionClient = new SessionsClient({
+      apiEndpoint: `${location}-dialogflow.googleapis.com`,
+    });
+    console.log(`Dialogflow CX client initialized for project: ${projectId}, agent: ${agentId}, location: ${location}`);
+  }
 } catch (error) {
-  console.error('Failed to initialize Dialogflow client:', error.message);
+  console.error('Failed to initialize Dialogflow CX client:', error.message);
   console.log('Make sure GOOGLE_APPLICATION_CREDENTIALS is set to your service account key file path');
 }
 
 /**
- * Detect intent from text input
+ * Detect intent from text input using Dialogflow CX
  * POST /api/dialogflow/detect-intent
  */
 router.post('/detect-intent', async (req, res, next) => {
   try {
-    const { sessionId, text, languageCode = 'en-US' } = req.body;
+    const { sessionId, text, languageCode: reqLanguageCode } = req.body;
 
     if (!text) {
       return res.status(400).json({ error: 'Text is required' });
     }
 
-    if (!projectId) {
-      // Return a mock response for development/demo purposes
-      console.log('DIALOGFLOW_PROJECT_ID not set, returning mock response');
+    // Check if Dialogflow CX is configured
+    if (!projectId || !agentId) {
+      console.log('Dialogflow CX not configured, returning mock response');
+      console.log('Required env vars: DIALOGFLOW_PROJECT_ID, DIALOGFLOW_AGENT_ID');
       return res.json(getMockResponse(text));
     }
 
     if (!sessionClient) {
-      return res.status(500).json({ error: 'Dialogflow client not initialized' });
+      return res.status(500).json({ error: 'Dialogflow CX client not initialized' });
     }
 
-    // Use provided sessionId or generate a new one
-    const session = sessionClient.projectAgentSessionPath(
+    // Build the session path for CX
+    const sessionPath = sessionClient.projectLocationAgentSessionPath(
       projectId,
+      location,
+      agentId,
       sessionId || uuidv4()
     );
 
     const request = {
-      session,
+      session: sessionPath,
       queryInput: {
         text: {
           text,
-          languageCode,
         },
+        languageCode: reqLanguageCode || languageCode,
       },
     };
 
     const [response] = await sessionClient.detectIntent(request);
-    const result = response.queryResult;
+    const queryResult = response.queryResult;
+
+    // Extract response messages from CX format
+    let fulfillmentText = '';
+    if (queryResult.responseMessages && queryResult.responseMessages.length > 0) {
+      for (const message of queryResult.responseMessages) {
+        if (message.text && message.text.text) {
+          fulfillmentText += message.text.text.join('\n');
+        }
+      }
+    }
+
+    // Get intent information
+    const intentInfo = queryResult.match?.intent;
+    const intentDisplayName = intentInfo?.displayName || queryResult.match?.matchType || 'Unknown';
+    const confidence = queryResult.match?.confidence || 0;
 
     res.json({
-      queryText: result.queryText,
-      fulfillmentText: result.fulfillmentText,
+      queryText: queryResult.text || text,
+      fulfillmentText: fulfillmentText || "I didn't understand that. Could you please rephrase?",
       intent: {
-        displayName: result.intent?.displayName || 'Unknown',
-        confidence: result.intentDetectionConfidence || 0,
+        displayName: intentDisplayName,
+        confidence: confidence,
       },
-      parameters: result.parameters?.fields || {},
-      outputContexts: result.outputContexts?.map(ctx => ({
-        name: ctx.name,
-        lifespanCount: ctx.lifespanCount,
-        parameters: ctx.parameters?.fields || {},
-      })) || [],
+      parameters: queryResult.parameters?.fields || {},
+      currentPage: queryResult.currentPage?.displayName || null,
+      outputContexts: [],
     });
   } catch (error) {
-    console.error('Dialogflow detect intent error:', error);
+    console.error('Dialogflow CX detect intent error:', error);
+
+    // Return mock response on error for better UX
+    if (error.code === 5) { // NOT_FOUND
+      console.log('Agent not found. Check DIALOGFLOW_AGENT_ID');
+    }
+
     next(error);
   }
 });
@@ -85,8 +112,6 @@ router.post('/detect-intent', async (req, res, next) => {
  */
 router.post('/detect-intent-audio', async (req, res, next) => {
   try {
-    // This endpoint would handle audio file uploads
-    // For now, return a not implemented response
     res.status(501).json({
       error: 'Audio input not implemented. Please use text input with Web Speech API.',
     });
