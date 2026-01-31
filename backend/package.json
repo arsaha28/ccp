@@ -1,0 +1,21 @@
+{
+  "name": "voice-agent-backend",
+  "version": "1.0.0",
+  "description": "Backend server for Voice Agent - Dialogflow integration",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "keywords": ["dialogflow", "voice-agent", "banking"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/dialogflow": "^7.4.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "uuid": "^13.0.0"
+  }
+}

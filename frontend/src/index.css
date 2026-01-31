@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+/* Banking theme custom styles */
+:root {
+  --primary-blue: #0047AB;
+  --primary-blue-dark: #003380;
+  --primary-blue-light: #4169E1;
+  --accent-gold: #D4AF37;
+  --success-green: #28A745;
+  --error-red: #DC3545;
+  --text-dark: #1A1A2E;
+  --text-muted: #6C757D;
+  --bg-light: #F8F9FA;
+  --bg-white: #FFFFFF;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  min-height: 100vh;
+  margin: 0;
+}
+
+/* Voice wave animation */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+}
+
+@keyframes sound-wave {
+  0%, 100% {
+    height: 8px;
+  }
+  50% {
+    height: 32px;
+  }
+}
+
+.pulse-ring {
+  animation: pulse-ring 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+}
+
+.sound-wave {
+  animation: sound-wave 0.5s ease-in-out infinite;
+}
+
+.sound-wave:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.sound-wave:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.sound-wave:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+.sound-wave:nth-child(5) {
+  animation-delay: 0.4s;
+}
+
+/* Scrollbar styling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Message bubble animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-bubble {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* Typing indicator */
+@keyframes typing-dot {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-8px);
+  }
+}
+
+.typing-dot {
+  animation: typing-dot 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Microphone button glow */
+@keyframes mic-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(0, 71, 171, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(0, 71, 171, 0.8);
+  }
+}
+
+.mic-active {
+  animation: mic-glow 1s ease-in-out infinite;
+}
