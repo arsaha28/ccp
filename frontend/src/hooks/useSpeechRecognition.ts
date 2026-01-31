@@ -1,4 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import type { SpeechRecognition, SpeechRecognitionEvent, SpeechRecognitionErrorEvent } from '../types';
+
+// Import to ensure global types are available
+import '../types';
 
 interface UseSpeechRecognitionOptions {
   continuous?: boolean;

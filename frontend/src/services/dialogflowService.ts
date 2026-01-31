@@ -1,4 +1,4 @@
-import { DialogflowResponse } from '../types';
+import type { DialogflowResponse } from '../types';
 
 const API_BASE_URL = '/api';
 

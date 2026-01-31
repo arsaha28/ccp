@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Message } from '../types';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import type { Message } from '../types';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis';
 import { dialogflowService } from '../services/dialogflowService';
