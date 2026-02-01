@@ -50,46 +50,37 @@ export const VoiceAgent: React.FC = () => {
     (v.name.toLowerCase().includes('female') && v.lang.startsWith('en'))
   ) || voices.find(v => v.lang.startsWith('en')) || null;
 
+  // Track if user has interacted with the page
+  const userHasInteractedRef = useRef(false);
+
   // Custom speak function with selected voice
   const speakWithVoice = useCallback((text: string) => {
-    if (!speechSynthesisSupported || !text) return;
+    if (!speechSynthesisSupported || !text || !userHasInteractedRef.current) return;
 
-    // Cancel any ongoing speech first
-    window.speechSynthesis.cancel();
-    setIsSpeakingLocal(false);
+    const utterance = new SpeechSynthesisUtterance(text);
 
-    // Chrome bug workaround: delay after cancel before speaking
-    setTimeout(() => {
-      const utterance = new SpeechSynthesisUtterance(text);
+    // Use selected voice or get fresh voices list as fallback
+    const availableVoices = voices.length > 0 ? voices : window.speechSynthesis.getVoices();
+    const voiceToUse = selectedVoice || availableVoices.find(v => v.lang.startsWith('en')) || availableVoices[0];
+    if (voiceToUse) {
+      utterance.voice = voiceToUse;
+    }
+    utterance.rate = 0.95;
+    utterance.pitch = 1.1;
+    utterance.volume = 1;
 
-      // Use selected voice or get fresh voices list as fallback
-      const availableVoices = voices.length > 0 ? voices : window.speechSynthesis.getVoices();
-      const voiceToUse = selectedVoice || availableVoices.find(v => v.lang.startsWith('en')) || availableVoices[0];
-      if (voiceToUse) {
-        utterance.voice = voiceToUse;
-      }
-      utterance.rate = 0.95;
-      utterance.pitch = 1.1;
-      utterance.volume = 1;
+    utterance.onstart = () => {
+      setIsSpeakingLocal(true);
+    };
+    utterance.onend = () => {
+      setIsSpeakingLocal(false);
+    };
+    utterance.onerror = (event) => {
+      console.error('Speech synthesis error:', event);
+      setIsSpeakingLocal(false);
+    };
 
-      utterance.onstart = () => {
-        setIsSpeakingLocal(true);
-      };
-      utterance.onend = () => {
-        setIsSpeakingLocal(false);
-      };
-      utterance.onerror = (event) => {
-        console.error('Speech synthesis error:', event);
-        setIsSpeakingLocal(false);
-      };
-
-      // Chrome bug workaround: resume if paused
-      if (window.speechSynthesis.paused) {
-        window.speechSynthesis.resume();
-      }
-
-      window.speechSynthesis.speak(utterance);
-    }, 100);
+    window.speechSynthesis.speak(utterance);
   }, [speechSynthesisSupported, selectedVoice, voices]);
 
   // Auto-scroll to bottom when new messages arrive
@@ -109,21 +100,17 @@ export const VoiceAgent: React.FC = () => {
     setMessages([welcomeMessage]);
   }, []);
 
-  // Speak welcome message when voices are loaded
-  useEffect(() => {
-    if (!welcomeSpokenRef.current && speechSynthesisSupported && voices.length > 0) {
-      welcomeSpokenRef.current = true;
-      const welcomeText = "Hello! Welcome to Retail Bank Branch Support. I'm your virtual assistant. How can I help you today?";
-      setTimeout(() => {
-        speakWithVoice(welcomeText);
-      }, 300);
-    }
-  }, [speechSynthesisSupported, voices.length, speakWithVoice]);
+  // Note: Welcome message is not auto-spoken due to browser autoplay restrictions
+  // Voice will work after user interacts with the page
 
   const handleUserInput = useCallback(async (text: string) => {
     if (!text.trim()) return;
 
-    cancelSpeech();
+    // Mark that user has interacted - enables voice output
+    userHasInteractedRef.current = true;
+
+    // Stop any ongoing speech
+    window.speechSynthesis.cancel();
     setIsSpeakingLocal(false);
 
     const userMessage: Message = {
@@ -171,7 +158,7 @@ export const VoiceAgent: React.FC = () => {
       setIsProcessing(false);
       setShowTyping(false);
     }
-  }, [cancelSpeech, speakWithVoice, speechSynthesisSupported]);
+  }, [speakWithVoice, speechSynthesisSupported]);
 
   // Process transcript when speech recognition stops
   useEffect(() => {
@@ -194,15 +181,19 @@ export const VoiceAgent: React.FC = () => {
   }, [isListening]);
 
   const handleVoiceButtonClick = useCallback(() => {
+    // Mark that user has interacted - enables voice output
+    userHasInteractedRef.current = true;
+
     if (isListening) {
       stopListening();
     } else {
-      cancelSpeech();
+      window.speechSynthesis.cancel();
       startListening();
     }
-  }, [isListening, startListening, stopListening, cancelSpeech]);
+  }, [isListening, startListening, stopListening]);
 
   const handleQuickAction = useCallback((query: string) => {
+    userHasInteractedRef.current = true;
     handleUserInput(query);
   }, [handleUserInput]);
 
