@@ -53,27 +53,40 @@ export const VoiceAgent: React.FC = () => {
   const speakWithVoice = useCallback((text: string) => {
     if (!speechSynthesisSupported || !text) return;
 
+    // Chrome bug workaround: cancel and resume to unstick
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
 
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-    }
-    utterance.rate = 0.95;
-    utterance.pitch = 1.1;
-    utterance.volume = 1;
+    // Small delay to ensure cancel completes (Chrome bug workaround)
+    setTimeout(() => {
+      const utterance = new SpeechSynthesisUtterance(text);
 
-    utterance.onstart = () => {
-      setIsSpeakingLocal(true);
-    };
-    utterance.onend = () => {
-      setIsSpeakingLocal(false);
-    };
-    utterance.onerror = () => {
-      setIsSpeakingLocal(false);
-    };
+      // Use selected voice or get fresh voices list as fallback
+      const voiceToUse = selectedVoice || window.speechSynthesis.getVoices().find(v => v.lang.startsWith('en'));
+      if (voiceToUse) {
+        utterance.voice = voiceToUse;
+      }
+      utterance.rate = 0.95;
+      utterance.pitch = 1.1;
+      utterance.volume = 1;
 
-    window.speechSynthesis.speak(utterance);
+      utterance.onstart = () => {
+        setIsSpeakingLocal(true);
+      };
+      utterance.onend = () => {
+        setIsSpeakingLocal(false);
+      };
+      utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event);
+        setIsSpeakingLocal(false);
+      };
+
+      // Chrome bug workaround: resume if paused
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+
+      window.speechSynthesis.speak(utterance);
+    }, 50);
   }, [speechSynthesisSupported, selectedVoice]);
 
   // Auto-scroll to bottom when new messages arrive
@@ -91,14 +104,18 @@ export const VoiceAgent: React.FC = () => {
       intent: 'Welcome',
     };
     setMessages([welcomeMessage]);
+  }, []);
 
-    if (!welcomeSpokenRef.current && speechSynthesisSupported) {
+  // Speak welcome message when voices are loaded
+  useEffect(() => {
+    if (!welcomeSpokenRef.current && speechSynthesisSupported && voices.length > 0) {
       welcomeSpokenRef.current = true;
+      const welcomeText = "Hello! Welcome to Retail Bank Branch Support. I'm your virtual assistant. How can I help you today?";
       setTimeout(() => {
-        speakWithVoice(welcomeMessage.text);
-      }, 500);
+        speakWithVoice(welcomeText);
+      }, 300);
     }
-  }, [speechSynthesisSupported, speakWithVoice]);
+  }, [speechSynthesisSupported, voices.length, speakWithVoice]);
 
   const handleUserInput = useCallback(async (text: string) => {
     if (!text.trim()) return;
