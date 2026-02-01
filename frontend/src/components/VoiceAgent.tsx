@@ -103,8 +103,39 @@ export const VoiceAgent: React.FC = () => {
       setIsSpeakingLocal(false);
     };
 
-    console.log('Calling speechSynthesis.speak()');
-    window.speechSynthesis.speak(utterance);
+    // Log speech synthesis state before speaking
+    console.log('Speech synthesis state:', {
+      speaking: window.speechSynthesis.speaking,
+      pending: window.speechSynthesis.pending,
+      paused: window.speechSynthesis.paused
+    });
+
+    // Chrome bug fix: cancel and wait before speaking
+    window.speechSynthesis.cancel();
+
+    // Chrome bug fix: resume if paused
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
+
+    // Use setTimeout to let cancel() complete
+    setTimeout(() => {
+      console.log('Calling speechSynthesis.speak() after delay');
+      window.speechSynthesis.speak(utterance);
+
+      // Chrome bug workaround: force start with a tiny timeout
+      setTimeout(() => {
+        console.log('After speak - state:', {
+          speaking: window.speechSynthesis.speaking,
+          pending: window.speechSynthesis.pending,
+          paused: window.speechSynthesis.paused
+        });
+        if (window.speechSynthesis.paused) {
+          console.log('Resuming paused speech');
+          window.speechSynthesis.resume();
+        }
+      }, 100);
+    }, 50);
   }, [speechSynthesisSupported, selectedVoice, voices]);
 
   // Auto-scroll to bottom when new messages arrive
