@@ -100,15 +100,6 @@ export const VoiceAgent: React.FC = () => {
     }
   }, [speechSynthesisSupported, speakWithVoice]);
 
-  // Process transcript when speech recognition stops
-  useEffect(() => {
-    if (!isListening && transcript) {
-      const finalTranscript = transcript;
-      resetTranscript();
-      handleUserInput(finalTranscript);
-    }
-  }, [isListening, transcript, handleUserInput, resetTranscript]);
-
   const handleUserInput = useCallback(async (text: string) => {
     if (!text.trim()) return;
 
@@ -161,6 +152,15 @@ export const VoiceAgent: React.FC = () => {
       setShowTyping(false);
     }
   }, [cancelSpeech, speakWithVoice, speechSynthesisSupported]);
+
+  // Process transcript when speech recognition stops
+  useEffect(() => {
+    if (!isListening && transcript) {
+      const finalTranscript = transcript;
+      resetTranscript();
+      handleUserInput(finalTranscript);
+    }
+  }, [isListening, transcript, handleUserInput, resetTranscript]);
 
   const handleVoiceButtonClick = useCallback(() => {
     if (isListening) {
