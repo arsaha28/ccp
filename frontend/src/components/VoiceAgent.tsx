@@ -55,13 +55,34 @@ export const VoiceAgent: React.FC = () => {
 
   // Custom speak function with selected voice
   const speakWithVoice = useCallback((text: string) => {
-    if (!speechSynthesisSupported || !text || !userHasInteractedRef.current) return;
+    console.log('speakWithVoice called:', {
+      text: text?.substring(0, 50),
+      speechSynthesisSupported,
+      userHasInteracted: userHasInteractedRef.current,
+      voicesCount: voices.length
+    });
+
+    if (!speechSynthesisSupported) {
+      console.log('Speech synthesis not supported');
+      return;
+    }
+    if (!text) {
+      console.log('No text to speak');
+      return;
+    }
+    if (!userHasInteractedRef.current) {
+      console.log('User has not interacted yet');
+      return;
+    }
 
     const utterance = new SpeechSynthesisUtterance(text);
 
     // Use selected voice or get fresh voices list as fallback
     const availableVoices = voices.length > 0 ? voices : window.speechSynthesis.getVoices();
     const voiceToUse = selectedVoice || availableVoices.find(v => v.lang.startsWith('en')) || availableVoices[0];
+
+    console.log('Voice selected:', voiceToUse?.name || 'default');
+
     if (voiceToUse) {
       utterance.voice = voiceToUse;
     }
@@ -70,9 +91,11 @@ export const VoiceAgent: React.FC = () => {
     utterance.volume = 1;
 
     utterance.onstart = () => {
+      console.log('Speech started');
       setIsSpeakingLocal(true);
     };
     utterance.onend = () => {
+      console.log('Speech ended');
       setIsSpeakingLocal(false);
     };
     utterance.onerror = (event) => {
@@ -80,6 +103,7 @@ export const VoiceAgent: React.FC = () => {
       setIsSpeakingLocal(false);
     };
 
+    console.log('Calling speechSynthesis.speak()');
     window.speechSynthesis.speak(utterance);
   }, [speechSynthesisSupported, selectedVoice, voices]);
 
@@ -108,9 +132,8 @@ export const VoiceAgent: React.FC = () => {
 
     // Mark that user has interacted - enables voice output
     userHasInteractedRef.current = true;
+    console.log('handleUserInput: userHasInteractedRef set to true');
 
-    // Stop any ongoing speech
-    window.speechSynthesis.cancel();
     setIsSpeakingLocal(false);
 
     const userMessage: Message = {
@@ -183,11 +206,11 @@ export const VoiceAgent: React.FC = () => {
   const handleVoiceButtonClick = useCallback(() => {
     // Mark that user has interacted - enables voice output
     userHasInteractedRef.current = true;
+    console.log('handleVoiceButtonClick: userHasInteractedRef set to true');
 
     if (isListening) {
       stopListening();
     } else {
-      window.speechSynthesis.cancel();
       startListening();
     }
   }, [isListening, startListening, stopListening]);
