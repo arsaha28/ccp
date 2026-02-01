@@ -15,7 +15,9 @@ export const VoiceAgent: React.FC = () => {
   const [showTyping, setShowTyping] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionStartTime] = useState(new Date());
+  const [isSpeakingLocal, setIsSpeakingLocal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const welcomeSpokenRef = useRef(false);
 
   const {
     isListening,
@@ -29,11 +31,14 @@ export const VoiceAgent: React.FC = () => {
   } = useSpeechRecognition({ continuous: false, interimResults: true });
 
   const {
-    isSpeaking,
+    isSpeaking: isSpeakingHook,
     cancel: cancelSpeech,
     isSupported: speechSynthesisSupported,
     voices,
   } = useSpeechSynthesis({ rate: 1, pitch: 1 });
+
+  // Combined speaking state from hook or our custom speak function
+  const isSpeaking = isSpeakingHook || isSpeakingLocal;
 
   // Select a friendly female voice for customer support
   const selectedVoice = voices.find(v =>
@@ -58,6 +63,16 @@ export const VoiceAgent: React.FC = () => {
     utterance.pitch = 1.1;
     utterance.volume = 1;
 
+    utterance.onstart = () => {
+      setIsSpeakingLocal(true);
+    };
+    utterance.onend = () => {
+      setIsSpeakingLocal(false);
+    };
+    utterance.onerror = () => {
+      setIsSpeakingLocal(false);
+    };
+
     window.speechSynthesis.speak(utterance);
   }, [speechSynthesisSupported, selectedVoice]);
 
@@ -77,25 +92,28 @@ export const VoiceAgent: React.FC = () => {
     };
     setMessages([welcomeMessage]);
 
-    setTimeout(() => {
-      if (speechSynthesisSupported) {
+    if (!welcomeSpokenRef.current && speechSynthesisSupported) {
+      welcomeSpokenRef.current = true;
+      setTimeout(() => {
         speakWithVoice(welcomeMessage.text);
-      }
-    }, 500);
+      }, 500);
+    }
   }, [speechSynthesisSupported, speakWithVoice]);
 
   // Process transcript when speech recognition stops
   useEffect(() => {
     if (!isListening && transcript) {
-      handleUserInput(transcript);
+      const finalTranscript = transcript;
       resetTranscript();
+      handleUserInput(finalTranscript);
     }
-  }, [isListening, transcript]);
+  }, [isListening, transcript, handleUserInput, resetTranscript]);
 
   const handleUserInput = useCallback(async (text: string) => {
     if (!text.trim()) return;
 
     cancelSpeech();
+    setIsSpeakingLocal(false);
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
