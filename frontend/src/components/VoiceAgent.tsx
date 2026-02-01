@@ -83,9 +83,10 @@ export const VoiceAgent: React.FC = () => {
 
     console.log('Voice selected:', voiceToUse?.name || 'default');
 
-    if (voiceToUse) {
-      utterance.voice = voiceToUse;
-    }
+    // Try without setting voice to use system default
+    // if (voiceToUse) {
+    //   utterance.voice = voiceToUse;
+    // }
     utterance.rate = 0.95;
     utterance.pitch = 1.1;
     utterance.volume = 1;
