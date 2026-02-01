@@ -18,6 +18,7 @@ export const VoiceAgent: React.FC = () => {
   const [isSpeakingLocal, setIsSpeakingLocal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const welcomeSpokenRef = useRef(false);
+  const lastProcessedTranscriptRef = useRef<string>('');
 
   const {
     isListening,
@@ -53,40 +54,38 @@ export const VoiceAgent: React.FC = () => {
   const speakWithVoice = useCallback((text: string) => {
     if (!speechSynthesisSupported || !text) return;
 
-    // Chrome bug workaround: cancel and resume to unstick
+    // Cancel any ongoing speech first
     window.speechSynthesis.cancel();
+    setIsSpeakingLocal(false);
 
-    // Small delay to ensure cancel completes (Chrome bug workaround)
-    setTimeout(() => {
-      const utterance = new SpeechSynthesisUtterance(text);
+    const utterance = new SpeechSynthesisUtterance(text);
 
-      // Use selected voice or get fresh voices list as fallback
-      const voiceToUse = selectedVoice || window.speechSynthesis.getVoices().find(v => v.lang.startsWith('en'));
-      if (voiceToUse) {
-        utterance.voice = voiceToUse;
-      }
-      utterance.rate = 0.95;
-      utterance.pitch = 1.1;
-      utterance.volume = 1;
+    // Use selected voice or get fresh voices list as fallback
+    const voiceToUse = selectedVoice || window.speechSynthesis.getVoices().find(v => v.lang.startsWith('en'));
+    if (voiceToUse) {
+      utterance.voice = voiceToUse;
+    }
+    utterance.rate = 0.95;
+    utterance.pitch = 1.1;
+    utterance.volume = 1;
 
-      utterance.onstart = () => {
-        setIsSpeakingLocal(true);
-      };
-      utterance.onend = () => {
-        setIsSpeakingLocal(false);
-      };
-      utterance.onerror = (event) => {
-        console.error('Speech synthesis error:', event);
-        setIsSpeakingLocal(false);
-      };
+    utterance.onstart = () => {
+      setIsSpeakingLocal(true);
+    };
+    utterance.onend = () => {
+      setIsSpeakingLocal(false);
+    };
+    utterance.onerror = (event) => {
+      console.error('Speech synthesis error:', event);
+      setIsSpeakingLocal(false);
+    };
 
-      // Chrome bug workaround: resume if paused
-      if (window.speechSynthesis.paused) {
-        window.speechSynthesis.resume();
-      }
+    // Chrome bug workaround: resume if paused
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
 
-      window.speechSynthesis.speak(utterance);
-    }, 50);
+    window.speechSynthesis.speak(utterance);
   }, [speechSynthesisSupported, selectedVoice]);
 
   // Auto-scroll to bottom when new messages arrive
@@ -172,12 +171,23 @@ export const VoiceAgent: React.FC = () => {
 
   // Process transcript when speech recognition stops
   useEffect(() => {
-    if (!isListening && transcript) {
+    if (!isListening && transcript && transcript !== lastProcessedTranscriptRef.current) {
+      lastProcessedTranscriptRef.current = transcript;
       const finalTranscript = transcript;
-      resetTranscript();
-      handleUserInput(finalTranscript);
+      // Use setTimeout to ensure state updates complete before processing
+      setTimeout(() => {
+        resetTranscript();
+        handleUserInput(finalTranscript);
+      }, 0);
     }
   }, [isListening, transcript, handleUserInput, resetTranscript]);
+
+  // Reset the processed transcript ref when starting to listen
+  useEffect(() => {
+    if (isListening) {
+      lastProcessedTranscriptRef.current = '';
+    }
+  }, [isListening]);
 
   const handleVoiceButtonClick = useCallback(() => {
     if (isListening) {
