@@ -58,35 +58,39 @@ export const VoiceAgent: React.FC = () => {
     window.speechSynthesis.cancel();
     setIsSpeakingLocal(false);
 
-    const utterance = new SpeechSynthesisUtterance(text);
+    // Chrome bug workaround: delay after cancel before speaking
+    setTimeout(() => {
+      const utterance = new SpeechSynthesisUtterance(text);
 
-    // Use selected voice or get fresh voices list as fallback
-    const voiceToUse = selectedVoice || window.speechSynthesis.getVoices().find(v => v.lang.startsWith('en'));
-    if (voiceToUse) {
-      utterance.voice = voiceToUse;
-    }
-    utterance.rate = 0.95;
-    utterance.pitch = 1.1;
-    utterance.volume = 1;
+      // Use selected voice or get fresh voices list as fallback
+      const availableVoices = voices.length > 0 ? voices : window.speechSynthesis.getVoices();
+      const voiceToUse = selectedVoice || availableVoices.find(v => v.lang.startsWith('en')) || availableVoices[0];
+      if (voiceToUse) {
+        utterance.voice = voiceToUse;
+      }
+      utterance.rate = 0.95;
+      utterance.pitch = 1.1;
+      utterance.volume = 1;
 
-    utterance.onstart = () => {
-      setIsSpeakingLocal(true);
-    };
-    utterance.onend = () => {
-      setIsSpeakingLocal(false);
-    };
-    utterance.onerror = (event) => {
-      console.error('Speech synthesis error:', event);
-      setIsSpeakingLocal(false);
-    };
+      utterance.onstart = () => {
+        setIsSpeakingLocal(true);
+      };
+      utterance.onend = () => {
+        setIsSpeakingLocal(false);
+      };
+      utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event);
+        setIsSpeakingLocal(false);
+      };
 
-    // Chrome bug workaround: resume if paused
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
-    }
+      // Chrome bug workaround: resume if paused
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
 
-    window.speechSynthesis.speak(utterance);
-  }, [speechSynthesisSupported, selectedVoice]);
+      window.speechSynthesis.speak(utterance);
+    }, 100);
+  }, [speechSynthesisSupported, selectedVoice, voices]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
