@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Message } from '../types';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
-import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis';
 import { dialogflowService } from '../services/dialogflowService';
+import { ttsService } from '../services/ttsService';
 import { ChatMessage } from './ChatMessage';
 import { VoiceButton } from './VoiceButton';
 import { QuickActions } from './QuickActions';
@@ -15,9 +15,8 @@ export const VoiceAgent: React.FC = () => {
   const [showTyping, setShowTyping] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionStartTime] = useState(new Date());
-  const [isSpeakingLocal, setIsSpeakingLocal] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const welcomeSpokenRef = useRef(false);
   const lastProcessedTranscriptRef = useRef<string>('');
 
   const {
@@ -31,113 +30,44 @@ export const VoiceAgent: React.FC = () => {
     resetTranscript,
   } = useSpeechRecognition({ continuous: false, interimResults: true });
 
-  const {
-    isSpeaking: isSpeakingHook,
-    cancel: cancelSpeech,
-    isSupported: speechSynthesisSupported,
-    voices,
-  } = useSpeechSynthesis({ rate: 1, pitch: 1 });
-
-  // Combined speaking state from hook or our custom speak function
-  const isSpeaking = isSpeakingHook || isSpeakingLocal;
-
-  // Select a friendly female voice for customer support
-  const selectedVoice = voices.find(v =>
-    v.name.includes('Google UK English Female') ||
-    v.name.includes('Google US English Female') ||
-    v.name.includes('Samantha') ||
-    v.name.includes('Microsoft Zira') ||
-    (v.name.toLowerCase().includes('female') && v.lang.startsWith('en'))
-  ) || voices.find(v => v.lang.startsWith('en')) || null;
-
-  // Track if user has interacted with the page
-  const userHasInteractedRef = useRef(false);
-
-  // Custom speak function with selected voice
-  const speakWithVoice = useCallback((text: string) => {
-    console.log('speakWithVoice called:', {
-      text: text?.substring(0, 50),
-      speechSynthesisSupported,
-      userHasInteracted: userHasInteractedRef.current,
-      voicesCount: voices.length
+  // Set up TTS service callbacks
+  useEffect(() => {
+    ttsService.onStart(() => {
+      console.log('Google Cloud TTS: Speech started');
+      setIsSpeaking(true);
     });
+    ttsService.onEnd(() => {
+      console.log('Google Cloud TTS: Speech ended');
+      setIsSpeaking(false);
+    });
+    ttsService.onError((err) => {
+      console.error('Google Cloud TTS: Error', err);
+      setIsSpeaking(false);
+    });
+  }, []);
 
-    if (!speechSynthesisSupported) {
-      console.log('Speech synthesis not supported');
-      return;
-    }
+  // Speak function using Google Cloud TTS
+  const speakWithVoice = useCallback(async (text: string) => {
     if (!text) {
-      console.log('No text to speak');
-      return;
-    }
-    if (!userHasInteractedRef.current) {
-      console.log('User has not interacted yet');
+      console.log('TTS: No text to speak');
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
+    console.log('TTS: Speaking with Google Cloud TTS:', text.substring(0, 50) + '...');
 
-    // Use selected voice or get fresh voices list as fallback
-    const availableVoices = voices.length > 0 ? voices : window.speechSynthesis.getVoices();
-    const voiceToUse = selectedVoice || availableVoices.find(v => v.lang.startsWith('en')) || availableVoices[0];
-
-    console.log('Voice selected:', voiceToUse?.name || 'default');
-
-    // Try without setting voice to use system default
-    // if (voiceToUse) {
-    //   utterance.voice = voiceToUse;
-    // }
-    utterance.rate = 0.95;
-    utterance.pitch = 1.1;
-    utterance.volume = 1;
-
-    utterance.onstart = () => {
-      console.log('Speech started');
-      setIsSpeakingLocal(true);
-    };
-    utterance.onend = () => {
-      console.log('Speech ended');
-      setIsSpeakingLocal(false);
-    };
-    utterance.onerror = (event) => {
-      console.error('Speech synthesis error:', event);
-      setIsSpeakingLocal(false);
-    };
-
-    // Log speech synthesis state before speaking
-    console.log('Speech synthesis state:', {
-      speaking: window.speechSynthesis.speaking,
-      pending: window.speechSynthesis.pending,
-      paused: window.speechSynthesis.paused
-    });
-
-    // Chrome bug fix: cancel and wait before speaking
-    window.speechSynthesis.cancel();
-
-    // Chrome bug fix: resume if paused
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
+    try {
+      await ttsService.speak(text);
+    } catch (err) {
+      console.error('TTS: Failed to speak:', err);
+      setError('Failed to play audio response');
     }
+  }, []);
 
-    // Use setTimeout to let cancel() complete
-    setTimeout(() => {
-      console.log('Calling speechSynthesis.speak() after delay');
-      window.speechSynthesis.speak(utterance);
-
-      // Chrome bug workaround: force start with a tiny timeout
-      setTimeout(() => {
-        console.log('After speak - state:', {
-          speaking: window.speechSynthesis.speaking,
-          pending: window.speechSynthesis.pending,
-          paused: window.speechSynthesis.paused
-        });
-        if (window.speechSynthesis.paused) {
-          console.log('Resuming paused speech');
-          window.speechSynthesis.resume();
-        }
-      }, 100);
-    }, 50);
-  }, [speechSynthesisSupported, selectedVoice, voices]);
+  // Cancel speech function
+  const cancelSpeech = useCallback(() => {
+    ttsService.cancel();
+    setIsSpeaking(false);
+  }, []);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -156,17 +86,11 @@ export const VoiceAgent: React.FC = () => {
     setMessages([welcomeMessage]);
   }, []);
 
-  // Note: Welcome message is not auto-spoken due to browser autoplay restrictions
-  // Voice will work after user interacts with the page
-
   const handleUserInput = useCallback(async (text: string) => {
     if (!text.trim()) return;
 
-    // Mark that user has interacted - enables voice output
-    userHasInteractedRef.current = true;
-    console.log('handleUserInput: userHasInteractedRef set to true');
-
-    setIsSpeakingLocal(false);
+    // Cancel any ongoing speech
+    cancelSpeech();
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
@@ -194,7 +118,8 @@ export const VoiceAgent: React.FC = () => {
 
       setMessages((prev) => [...prev, agentMessage]);
 
-      if (speechSynthesisSupported && response.fulfillmentText) {
+      // Speak the response using Google Cloud TTS
+      if (response.fulfillmentText) {
         speakWithVoice(response.fulfillmentText);
       }
     } catch (err) {
@@ -213,7 +138,7 @@ export const VoiceAgent: React.FC = () => {
       setIsProcessing(false);
       setShowTyping(false);
     }
-  }, [speakWithVoice, speechSynthesisSupported]);
+  }, [speakWithVoice, cancelSpeech]);
 
   // Process transcript when speech recognition stops
   useEffect(() => {
@@ -236,19 +161,15 @@ export const VoiceAgent: React.FC = () => {
   }, [isListening]);
 
   const handleVoiceButtonClick = useCallback(() => {
-    // Mark that user has interacted - enables voice output
-    userHasInteractedRef.current = true;
-    console.log('handleVoiceButtonClick: userHasInteractedRef set to true');
-
     if (isListening) {
       stopListening();
     } else {
+      cancelSpeech();
       startListening();
     }
-  }, [isListening, startListening, stopListening]);
+  }, [isListening, startListening, stopListening, cancelSpeech]);
 
   const handleQuickAction = useCallback((query: string) => {
-    userHasInteractedRef.current = true;
     handleUserInput(query);
   }, [handleUserInput]);
 
