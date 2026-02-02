@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { dialogflowRouter } from './routes/dialogflow.js';
+import { ttsRouter } from './routes/tts.js';
 
 // Load environment variables
 dotenv.config();
@@ -28,6 +29,9 @@ app.get('/api/health', (req, res) => {
 // Dialogflow routes
 app.use('/api/dialogflow', dialogflowRouter);
 
+// Text-to-Speech routes
+app.use('/api/tts', ttsRouter);
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
@@ -47,4 +51,5 @@ app.listen(PORT, () => {
   console.log(`🚀 Voice Agent Backend running on port ${PORT}`);
   console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
   console.log(`🤖 Dialogflow API: http://localhost:${PORT}/api/dialogflow`);
+  console.log(`🔊 Text-to-Speech API: http://localhost:${PORT}/api/tts`);
 });
