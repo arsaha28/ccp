@@ -68,28 +68,6 @@ export const VoiceAgent: React.FC = () => {
     });
   }, []);
 
-  // Handle agent change
-  const handleAgentChange = useCallback((agent: Agent) => {
-    setSelectedAgent(agent);
-    dialogflowService.setAgentId(agent.id);
-
-    // Clear conversation and show new welcome message
-    setMessages([]);
-    setSessionStartTime(new Date());
-
-    const welcomeMessage: Message = {
-      id: 'welcome',
-      text: `Hello! You're now connected to the ${agent.name}. ${agent.description}. How can I help you today?`,
-      sender: 'agent',
-      timestamp: new Date(),
-      intent: 'Welcome',
-    };
-    setMessages([welcomeMessage]);
-
-    // Speak the welcome message
-    speakWithVoice(welcomeMessage.text);
-  }, [speakWithVoice]);
-
   // Speak function using Google Cloud TTS
   const speakWithVoice = useCallback(async (text: string) => {
     if (!text) {
@@ -112,6 +90,28 @@ export const VoiceAgent: React.FC = () => {
     ttsService.cancel();
     setIsSpeaking(false);
   }, []);
+
+  // Handle agent change
+  const handleAgentChange = useCallback((agent: Agent) => {
+    setSelectedAgent(agent);
+    dialogflowService.setAgentId(agent.id);
+
+    // Clear conversation and show new welcome message
+    setMessages([]);
+    setSessionStartTime(new Date());
+
+    const welcomeMessage: Message = {
+      id: 'welcome',
+      text: `Hello! You're now connected to the ${agent.name}. ${agent.description}. How can I help you today?`,
+      sender: 'agent',
+      timestamp: new Date(),
+      intent: 'Welcome',
+    };
+    setMessages([welcomeMessage]);
+
+    // Speak the welcome message
+    speakWithVoice(welcomeMessage.text);
+  }, [speakWithVoice]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
