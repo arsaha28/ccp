@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Message } from '../types';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
-import { dialogflowService, Agent } from '../services/dialogflowService';
+import { dialogflowService } from '../services/dialogflowService';
+import type { Agent } from '../services/dialogflowService';
 import { ttsService } from '../services/ttsService';
 import { ChatMessage } from './ChatMessage';
 import { VoiceButton } from './VoiceButton';
