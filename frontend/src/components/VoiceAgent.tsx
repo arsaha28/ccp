@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Message } from '../types';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
-import { dialogflowService } from '../services/dialogflowService';
+import { dialogflowService, Agent } from '../services/dialogflowService';
 import { ttsService } from '../services/ttsService';
 import { ChatMessage } from './ChatMessage';
 import { VoiceButton } from './VoiceButton';
@@ -14,8 +14,10 @@ export const VoiceAgent: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showTyping, setShowTyping] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sessionStartTime] = useState(new Date());
+  const [sessionStartTime, setSessionStartTime] = useState(new Date());
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastProcessedTranscriptRef = useRef<string>('');
 
@@ -29,6 +31,25 @@ export const VoiceAgent: React.FC = () => {
     stopListening,
     resetTranscript,
   } = useSpeechRecognition({ continuous: false, interimResults: true });
+
+  // Fetch available agents on mount
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const response = await dialogflowService.getAvailableAgents();
+        setAgents(response.agents);
+        // Set default agent
+        const defaultAgent = response.agents.find(a => a.key === response.defaultAgent) || response.agents[0];
+        if (defaultAgent) {
+          setSelectedAgent(defaultAgent);
+          dialogflowService.setAgentId(defaultAgent.id);
+        }
+      } catch (err) {
+        console.error('Failed to fetch agents:', err);
+      }
+    };
+    fetchAgents();
+  }, []);
 
   // Set up TTS service callbacks
   useEffect(() => {
@@ -45,6 +66,28 @@ export const VoiceAgent: React.FC = () => {
       setIsSpeaking(false);
     });
   }, []);
+
+  // Handle agent change
+  const handleAgentChange = useCallback((agent: Agent) => {
+    setSelectedAgent(agent);
+    dialogflowService.setAgentId(agent.id);
+
+    // Clear conversation and show new welcome message
+    setMessages([]);
+    setSessionStartTime(new Date());
+
+    const welcomeMessage: Message = {
+      id: 'welcome',
+      text: `Hello! You're now connected to the ${agent.name}. ${agent.description}. How can I help you today?`,
+      sender: 'agent',
+      timestamp: new Date(),
+      intent: 'Welcome',
+    };
+    setMessages([welcomeMessage]);
+
+    // Speak the welcome message
+    speakWithVoice(welcomeMessage.text);
+  }, [speakWithVoice]);
 
   // Speak function using Google Cloud TTS
   const speakWithVoice = useCallback(async (text: string) => {
@@ -228,19 +271,48 @@ export const VoiceAgent: React.FC = () => {
           </div>
         </div>
 
-        {/* Agent Status */}
+        {/* Agent Selector */}
         <div className="p-4 border-b border-gray-100">
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Agent Status</h3>
-          <div className="flex items-center space-x-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
-            <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-[#0047AB] to-[#003380] rounded-full flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-900">Virtual Assistant</p>
-              <p className="text-xs text-gray-500">Powered by Dialogflow CX</p>
-            </div>
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Select Agent</h3>
+          <div className="space-y-2">
+            {agents.map((agent) => (
+              <button
+                key={agent.key}
+                onClick={() => handleAgentChange(agent)}
+                className={`w-full flex items-center space-x-3 p-3 rounded-lg border transition-all ${
+                  selectedAgent?.key === agent.key
+                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 ring-1 ring-blue-200'
+                    : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                  selectedAgent?.key === agent.key
+                    ? 'bg-gradient-to-br from-[#0047AB] to-[#003380]'
+                    : 'bg-gray-200'
+                }`}>
+                  <svg className={`w-5 h-5 ${selectedAgent?.key === agent.key ? 'text-white' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {agent.key === 'mortgage' ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    )}
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <p className={`text-sm font-medium ${selectedAgent?.key === agent.key ? 'text-gray-900' : 'text-gray-700'}`}>
+                    {agent.name}
+                  </p>
+                  <p className="text-xs text-gray-500 line-clamp-1">{agent.description}</p>
+                </div>
+                {selectedAgent?.key === agent.key && (
+                  <div className="ml-auto">
+                    <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                )}
+              </button>
+            ))}
           </div>
         </div>
 
