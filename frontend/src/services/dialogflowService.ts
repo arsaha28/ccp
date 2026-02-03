@@ -2,8 +2,21 @@ import type { DialogflowResponse } from '../types';
 
 const API_BASE_URL = '/api';
 
+export interface Agent {
+  key: string;
+  id: string;
+  name: string;
+  description: string;
+}
+
+interface AgentsResponse {
+  agents: Agent[];
+  defaultAgent: string;
+}
+
 class DialogflowService {
   private sessionId: string;
+  private currentAgentId: string | null = null;
 
   constructor() {
     // Generate a unique session ID for this conversation
@@ -12,6 +25,29 @@ class DialogflowService {
 
   private generateSessionId(): string {
     return `session-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  }
+
+  setAgentId(agentId: string): void {
+    this.currentAgentId = agentId;
+    // Reset session when switching agents
+    this.sessionId = this.generateSessionId();
+  }
+
+  getAgentId(): string | null {
+    return this.currentAgentId;
+  }
+
+  async getAvailableAgents(): Promise<AgentsResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/dialogflow/agents`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+      throw error;
+    }
   }
 
   async detectIntent(text: string): Promise<DialogflowResponse> {
@@ -25,6 +61,7 @@ class DialogflowService {
           sessionId: this.sessionId,
           text,
           languageCode: 'en-US',
+          agentId: this.currentAgentId,
         }),
       });
 

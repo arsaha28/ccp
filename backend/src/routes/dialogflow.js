@@ -7,8 +7,22 @@ const router = express.Router();
 // Get configuration from environment
 const projectId = process.env.DIALOGFLOW_PROJECT_ID;
 const location = process.env.DIALOGFLOW_LOCATION || 'us-central1';
-const agentId = process.env.DIALOGFLOW_AGENT_ID;
+const defaultAgentId = process.env.DIALOGFLOW_AGENT_ID;
 const languageCode = process.env.DIALOGFLOW_LANGUAGE_CODE || 'en';
+
+// Available agents configuration
+const availableAgents = {
+  'transaction': {
+    id: '41436240-476e-49bf-829c-9a3ecc310ac0',
+    name: 'Transaction Agent',
+    description: 'Handles account balances, transactions, and general banking inquiries'
+  },
+  'mortgage': {
+    id: 'd3672fbb-3aa1-4dbf-b736-8fb9f800e080',
+    name: 'Mortgage Agent',
+    description: 'Specializes in mortgage and home loan inquiries'
+  }
+};
 
 // Create session client for Dialogflow CX
 let sessionClient;
@@ -30,11 +44,14 @@ try {
  */
 router.post('/detect-intent', async (req, res, next) => {
   try {
-    const { sessionId, text, languageCode: reqLanguageCode } = req.body;
+    const { sessionId, text, languageCode: reqLanguageCode, agentId: requestAgentId } = req.body;
 
     if (!text) {
       return res.status(400).json({ error: 'Text is required' });
     }
+
+    // Use requested agent ID, or fall back to default
+    const agentId = requestAgentId || defaultAgentId;
 
     // Check if Dialogflow CX is configured
     if (!projectId || !agentId) {
@@ -42,6 +59,8 @@ router.post('/detect-intent', async (req, res, next) => {
       console.log('Required env vars: DIALOGFLOW_PROJECT_ID, DIALOGFLOW_AGENT_ID');
       return res.json(getMockResponse(text));
     }
+
+    console.log(`Using agent: ${agentId}`);
 
     if (!sessionClient) {
       return res.status(500).json({ error: 'Dialogflow CX client not initialized' });
@@ -104,6 +123,18 @@ router.post('/detect-intent', async (req, res, next) => {
 
     next(error);
   }
+});
+
+/**
+ * List available agents
+ * GET /api/dialogflow/agents
+ */
+router.get('/agents', (req, res) => {
+  const agents = Object.entries(availableAgents).map(([key, agent]) => ({
+    key,
+    ...agent
+  }));
+  res.json({ agents, defaultAgent: 'transaction' });
 });
 
 /**
