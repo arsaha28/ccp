@@ -7,7 +7,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  bankName = 'PS Agentic Telephony Banking',
+  bankName = 'PS Agentic Voice Banking',
   agentName = 'Virtual Branch Assistant',
   sessionId,
 }) => {

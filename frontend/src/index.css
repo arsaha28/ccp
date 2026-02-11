@@ -417,6 +417,16 @@ button {
   color: #818CF8 !important;
 }
 
+/* Agent selector gradient override for dark mode */
+.bg-gradient-to-r.from-blue-50.to-indigo-50 {
+  background: linear-gradient(to right, rgba(59, 130, 246, 0.25), rgba(99, 102, 241, 0.25)) !important;
+}
+
+/* Ring color override for agent selector */
+.ring-blue-200 {
+  --tw-ring-color: rgba(59, 130, 246, 0.4) !important;
+}
+
 /* Additional dark mode enhancements */
 .rounded-xl,
 .rounded-2xl,
