@@ -122,7 +122,7 @@ export const VoiceAgent: React.FC = () => {
   useEffect(() => {
     const welcomeMessage: Message = {
       id: 'welcome',
-      text: "Hello! Welcome to Retail Bank Branch Support. I'm your virtual assistant. How can I help you today? You can speak to me by pressing the microphone button or type your question below.",
+      text: "Hello! Welcome to PS Agentic Voice Banking. I'm your virtual assistant. How can I help you today? You can speak to me by pressing the microphone button or type your question below.",
       sender: 'agent',
       timestamp: new Date(),
       intent: 'Welcome',
@@ -224,7 +224,7 @@ export const VoiceAgent: React.FC = () => {
 
     const welcomeMessage: Message = {
       id: 'welcome',
-      text: "Hello! Welcome to Retail Bank Branch Support. I'm your virtual assistant. How can I help you today?",
+      text: "Hello! Welcome to PS Agentic Voice Banking. I'm your virtual assistant. How can I help you today?",
       sender: 'agent',
       timestamp: new Date(),
       intent: 'Welcome',
