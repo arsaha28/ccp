@@ -1,18 +1,22 @@
 @import "tailwindcss";
 
-/* Enterprise Banking Theme */
+/* Enterprise Banking Dark Theme */
 :root {
-  --primary-blue: #0047AB;
-  --primary-blue-dark: #003380;
-  --primary-blue-light: #4169E1;
-  --accent-gold: #D4AF37;
+  --primary-blue: #3B82F6;
+  --primary-blue-dark: #1D4ED8;
+  --primary-blue-light: #60A5FA;
+  --accent-gold: #F59E0B;
   --success-green: #10B981;
   --warning-amber: #F59E0B;
   --error-red: #EF4444;
-  --text-dark: #111827;
-  --text-muted: #6B7280;
-  --bg-light: #F9FAFB;
-  --bg-white: #FFFFFF;
+  --text-dark: #F9FAFB;
+  --text-muted: #9CA3AF;
+  --bg-dark: #0F172A;
+  --bg-darker: #020617;
+  --bg-card: #1E293B;
+  --bg-elevated: #334155;
+  --border-color: #334155;
+  --border-light: #475569;
 }
 
 * {
@@ -22,10 +26,165 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-  background-color: #F3F4F6;
+  background-color: var(--bg-darker);
   min-height: 100vh;
   margin: 0;
   color: var(--text-dark);
+}
+
+/* Dark theme overrides for Tailwind classes */
+
+/* Background overrides */
+.bg-white {
+  background-color: var(--bg-card) !important;
+}
+
+.bg-gray-50,
+.bg-gray-100 {
+  background-color: var(--bg-dark) !important;
+}
+
+.bg-gray-200 {
+  background-color: var(--bg-elevated) !important;
+}
+
+/* Header gradient - keep dark but enhance */
+.bg-gradient-to-r.from-\[\#0a1628\].to-\[\#1a365d\] {
+  background: linear-gradient(to right, #020617, #0F172A) !important;
+}
+
+/* Card backgrounds */
+.bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+.bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+}
+
+.bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+}
+
+.bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+/* Text color overrides */
+.text-gray-900 {
+  color: #F9FAFB !important;
+}
+
+.text-gray-800 {
+  color: #F3F4F6 !important;
+}
+
+.text-gray-700 {
+  color: #E5E7EB !important;
+}
+
+.text-gray-600 {
+  color: #D1D5DB !important;
+}
+
+.text-gray-500 {
+  color: #9CA3AF !important;
+}
+
+.text-gray-400 {
+  color: #6B7280 !important;
+}
+
+/* Border overrides */
+.border-gray-100,
+.border-gray-200,
+.border-gray-300 {
+  border-color: var(--border-color) !important;
+}
+
+.border-blue-100 {
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+.border-emerald-200 {
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+/* Divide overrides */
+.divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+.divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--border-color) !important;
+}
+
+/* Shadow enhancements for dark mode */
+.shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.shadow {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.4) !important;
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5) !important;
+}
+
+.shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Ring overrides */
+.ring-gray-100 {
+  --tw-ring-color: var(--border-color) !important;
+}
+
+/* Hover state overrides */
+.hover\:bg-gray-50:hover {
+  background-color: var(--bg-elevated) !important;
+}
+
+.hover\:bg-gray-100:hover {
+  background-color: var(--bg-elevated) !important;
+}
+
+.hover\:bg-blue-50:hover {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+.hover\:text-gray-600:hover {
+  color: #E5E7EB !important;
+}
+
+/* Focus state overrides */
+.focus\:ring-gray-200:focus {
+  --tw-ring-color: var(--border-light) !important;
+}
+
+/* Input field styling */
+input,
+textarea,
+select {
+  background-color: var(--bg-dark) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-dark) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6B7280 !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--primary-blue) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Button enhancements */
+button {
+  transition: all 0.15s ease-in-out;
 }
 
 /* Voice wave animation */
@@ -83,22 +242,41 @@ body {
   animation-delay: 0.6s;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - Dark theme */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--bg-dark);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #D1D5DB;
+  background: var(--border-light);
   border-radius: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #9CA3AF;
+  background: #64748B;
+}
+
+/* Global scrollbar dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-darker);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-light);
 }
 
 /* Message bubble animations */
@@ -141,13 +319,13 @@ body {
   animation-delay: 0.4s;
 }
 
-/* Microphone button glow */
+/* Microphone button glow - Enhanced for dark theme */
 @keyframes mic-glow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5), 0 0 40px rgba(239, 68, 68, 0.2);
   }
   50% {
-    box-shadow: 0 0 35px rgba(239, 68, 68, 0.7);
+    box-shadow: 0 0 35px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.3);
   }
 }
 
@@ -169,7 +347,7 @@ body {
   animation: status-pulse 2s ease-in-out infinite;
 }
 
-/* Skeleton loading */
+/* Skeleton loading - Dark theme */
 @keyframes skeleton {
   0% {
     background-position: -200px 0;
@@ -180,22 +358,118 @@ body {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-elevated) 50%, var(--bg-card) 75%);
   background-size: 200px 100%;
   animation: skeleton 1.5s ease-in-out infinite;
 }
 
-/* Glass effect */
+/* Glass effect - Dark theme */
 .glass {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(30, 41, 59, 0.8);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(71, 85, 105, 0.3);
 }
 
-/* Gradient text */
+/* Gradient text - Enhanced for dark theme */
 .gradient-text {
-  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+  background: linear-gradient(135deg, var(--primary-blue-light) 0%, var(--primary-blue) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Badge styling for dark theme */
+.bg-blue-100 {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+.text-blue-800 {
+  color: #93C5FD !important;
+}
+
+.bg-green-100 {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+}
+
+.text-green-800 {
+  color: #6EE7B7 !important;
+}
+
+/* Agent selector styling */
+.bg-indigo-50 {
+  background-color: rgba(99, 102, 241, 0.15) !important;
+}
+
+.border-indigo-200 {
+  border-color: rgba(99, 102, 241, 0.3) !important;
+}
+
+.text-indigo-900 {
+  color: #C7D2FE !important;
+}
+
+.text-indigo-600 {
+  color: #A5B4FC !important;
+}
+
+.text-indigo-500 {
+  color: #818CF8 !important;
+}
+
+/* Additional dark mode enhancements */
+.rounded-xl,
+.rounded-2xl,
+.rounded-3xl {
+  box-shadow: 0 0 0 1px rgba(71, 85, 105, 0.1);
+}
+
+/* Subtle glow effect for primary actions */
+.bg-gradient-to-br.from-\[\#0047AB\].to-\[\#003380\] {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+/* Message bubbles styling */
+.bg-blue-600 {
+  background-color: #2563EB !important;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.3);
+}
+
+/* Session and security badge dark styling */
+.bg-emerald-400 {
+  background-color: #34D399 !important;
+}
+
+.text-emerald-400 {
+  color: #34D399 !important;
+}
+
+.text-emerald-600 {
+  color: #10B981 !important;
+}
+
+.text-emerald-700 {
+  color: #6EE7B7 !important;
+}
+
+/* Header text adjustments */
+.text-gray-300 {
+  color: #CBD5E1 !important;
+}
+
+/* Smooth transitions for interactive elements */
+a, button, input, select, textarea {
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  outline: 2px solid var(--primary-blue);
+  outline-offset: 2px;
+}
+
+/* Selection color */
+::selection {
+  background-color: rgba(59, 130, 246, 0.3);
+  color: #F9FAFB;
 }
